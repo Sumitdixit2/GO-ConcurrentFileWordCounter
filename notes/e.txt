@@ -1,0 +1,2 @@
+Im gonna try to Count the words in these txt files with go routines and without 
+GO routines.

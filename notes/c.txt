@@ -1,0 +1,4 @@
+The goal of this project is learn more about GO concurrency with GO routines and
+channels mechanism to prevent deadlocks or race around conditons.
+
+GO routines are light weight threads handled by GO itself nd not the OS.

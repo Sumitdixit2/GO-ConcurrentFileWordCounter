@@ -1,0 +1,5 @@
+Im tryna learn GO bcz it's really awesome fast and the logo looks really awesome.
+
+I can't wait to write API's with GO and also try to create infra systems with it too.
+
+It feels fresh writing code in a new language after so long.
