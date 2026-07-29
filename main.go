@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"io/ioutil"
 	"strings"
+	"sync"
 )
 
 func countWords(file string) int {
@@ -20,7 +21,7 @@ func countWords(file string) int {
 	return len(words)
 }
 
-func listfiles(dir string) ([]string,[]int){
+func listfiles(dir string) []string{
 	files,err := os.ReadDir(dir)
 
 	if err != nil {
@@ -28,7 +29,6 @@ func listfiles(dir string) ([]string,[]int){
 	}
 
 	var list []string
-	var words []int
 
 	for _,entry := range files{
 		if !entry.IsDir() {
@@ -36,19 +36,31 @@ func listfiles(dir string) ([]string,[]int){
 	}
 	}
 
+	var wg sync.WaitGroup
+
 	for _,file := range list {
-		words = append(words,countWords(file))
+		wg.Add(1)
+		 go func (file string) {
+			 defer wg.Done()
+			 fmt.Println("Started: ",file)
+
+				 countWords(file)
+
+			 fmt.Println("Completed: ",file)
+		}(file)
 	}
 
-	return list,words
+	wg.Wait()
+
+	return list
 
 }
 
 func main(){
 	dir := "./notes/"
-	list,words := listfiles(dir)
+	list := listfiles(dir)
 
-	for i,filename := range list {
-			fmt.Println("file: ",filename," has ",words[i]," words")
+	for _,filename := range list {
+			fmt.Println("file: ",filename)
 			}
 }
