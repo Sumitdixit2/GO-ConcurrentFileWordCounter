@@ -10,6 +10,11 @@ import (
 	"sync"
 )
 
+type WordCounter struct {
+	filename []string
+	words []int
+}
+
 func countWords(file string) int {
 	content , err := ioutil.ReadFile(file)
 
@@ -21,7 +26,8 @@ func countWords(file string) int {
 	return len(words)
 }
 
-func listfiles(dir string) []string{
+func listfiles(dir string) ([]string,[]int){
+	chn := make(chan int)
 	files,err := os.ReadDir(dir)
 
 	if err != nil {
@@ -29,6 +35,7 @@ func listfiles(dir string) []string{
 	}
 
 	var list []string
+	var words []int
 
 	for _,entry := range files{
 		if !entry.IsDir() {
@@ -44,23 +51,29 @@ func listfiles(dir string) []string{
 			 defer wg.Done()
 			 fmt.Println("Started: ",file)
 
-				 countWords(file)
+			 words:= countWords(file)
+			 chn <- words
+			 data := <- chn
+			 words= append(words,data)
+
 
 			 fmt.Println("Completed: ",file)
 		}(file)
+
+		
 	}
 
 	wg.Wait()
 
-	return list
+	return list,words
 
 }
 
 func main(){
 	dir := "./notes/"
-	list := listfiles(dir)
+	list,words := listfiles(dir)
 
-	for _,filename := range list {
-			fmt.Println("file: ",filename)
+	for i,filename := range list {
+		fmt.Println("file: ",filename," has: ",words[i]," words")
 			}
 }
