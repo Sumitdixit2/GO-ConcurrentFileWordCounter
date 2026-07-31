@@ -10,6 +10,8 @@ import (
 	"sync"
 )
 
+var wg sync.WaitGroup
+
 type WordCounter struct {
 	filename string
 	words int
@@ -26,7 +28,17 @@ func countWords(file string) int {
 	return len(words)
 }
 
+func worker (jobchn chan string , resultchn chan WordCounter) {
+		defer wg.Done()
+		filename := <- jobchn
+
+		Countedwords := countWords(filename)
+
+		resultchn <- WordCounter{filename: filename , words: Countedwords}
+}
+
 func listfiles(dir string) ([]WordCounter){
+	jobchn := make(chan string)
 	chn := make(chan WordCounter)
 	files,err := os.ReadDir(dir)
 
@@ -43,23 +55,14 @@ func listfiles(dir string) ([]WordCounter){
 	}
 	}
 
-	var wg sync.WaitGroup
 
-	for _,file := range list {
-		wg.Add(1)
-		 go func (file string) {
-			 defer wg.Done()
-			 fmt.Println("Started: ",file)
-
-			 Countedwords:= countWords(file)
-			 chn <- WordCounter{filename: file,words: Countedwords}
-			 
-			 
-			 fmt.Println("Completed: ",file)
-			 
-		}(file)
-
+	for _,filename := range list {
+	 	jobchn <- filename	
 	}
+
+	wg.Add(2)
+	go worker(jobchn,chn)
+	go worker(jobchn,chn)
 
 	for i:=0; i< len(list); i++ {
 		data:= <- chn
@@ -67,6 +70,8 @@ func listfiles(dir string) ([]WordCounter){
 	}
 
 	wg.Wait()
+
+	fmt.Println("All the files have been read by the 2 workers")
 
 	return results
 
