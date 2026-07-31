@@ -28,11 +28,24 @@ func countWords(file string) int {
 	return len(words)
 }
 
+func Jobworker (jobchn chan<- string,list []string) {
+	defer wg.Done()
+
+	for _,filename := range list {
+		jobchn <- filename
+	}
+	close(jobchn)
+}
+
 func worker (jobchn <-chan string , resultchn chan<- WordCounter) {
 	defer wg.Done()
 	for filename := range jobchn{
 
+		fmt.Println("Started reading file: ",filename)
+
 		Countedwords := countWords(filename)
+
+		fmt.Println("file: ",filename," has been successfully read!")
 
 		resultchn <- WordCounter{filename: filename , words: Countedwords}
 	}
@@ -60,12 +73,13 @@ func listfiles(dir string) ([]WordCounter){
 	go worker(jobchn,chn)
 	go worker(jobchn,chn)
 
-	for _,filename := range list {
-	 	jobchn <- filename	
+	wg.Add(1)
+	go Jobworker(jobchn,list)
+
+	for i:= 0; i< len(list); i++ {
 		data:= <- chn
 		results = append(results,data)
 	}
-	close(jobchn)
 
 	wg.Wait()
 
