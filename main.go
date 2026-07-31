@@ -11,8 +11,8 @@ import (
 )
 
 type WordCounter struct {
-	filename []string
-	words []int
+	filename string
+	words int
 }
 
 func countWords(file string) int {
@@ -26,8 +26,8 @@ func countWords(file string) int {
 	return len(words)
 }
 
-func listfiles(dir string) ([]string,[]int){
-	chn := make(chan int)
+func listfiles(dir string) ([]WordCounter){
+	chn := make(chan WordCounter)
 	files,err := os.ReadDir(dir)
 
 	if err != nil {
@@ -35,7 +35,7 @@ func listfiles(dir string) ([]string,[]int){
 	}
 
 	var list []string
-	var words []int
+	var results []WordCounter
 
 	for _,entry := range files{
 		if !entry.IsDir() {
@@ -51,29 +51,32 @@ func listfiles(dir string) ([]string,[]int){
 			 defer wg.Done()
 			 fmt.Println("Started: ",file)
 
-			 words:= countWords(file)
-			 chn <- words
-			 data := <- chn
-			 words= append(words,data)
-
-
+			 Countedwords:= countWords(file)
+			 chn <- WordCounter{filename: file,words: Countedwords}
+			 
+			 
 			 fmt.Println("Completed: ",file)
+			 
 		}(file)
 
-		
+	}
+
+	for i:=0; i< len(list); i++ {
+		data:= <- chn
+		results = append(results,data)
 	}
 
 	wg.Wait()
 
-	return list,words
+	return results
 
 }
 
 func main(){
 	dir := "./notes/"
-	list,words := listfiles(dir)
+	results := listfiles(dir)
 
-	for i,filename := range list {
-		fmt.Println("file: ",filename," has: ",words[i]," words")
+	for _,result := range results {
+		fmt.Println("file: ",result.filename," has: ",result.words," words")
 			}
 }
